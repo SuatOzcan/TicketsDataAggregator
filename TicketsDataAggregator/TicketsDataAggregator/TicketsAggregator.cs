@@ -41,10 +41,23 @@ internal class TicketsAggregator
                 string dateAsString = splittedText[i + 1];
                 string timeAsString = splittedText[i + 2];
 
-                DateTime date = DateTime.Parse(dateAsString, new CultureInfo(ticketCulture));
+                DateTime date = DateTime.Parse(dateAsString, new CultureInfo(ticketCulture)); // Changes the string to standard
+                                                                                              // DateTime d/m/y format.
+                // So I can infer that DateTime only holds values in d/m/y format.
+                DateTime dt = new DateTime(3, 2, 1);
+                string g = dt.ToString();
+                // The output string of the standard dateTimeObject.ToString() method will be in format d/m/y.
+
+                int day = date.Day;
                 //DateOnly dateOnly = DateOnly.Parse(dateAsString, new CultureInfo(ticketCulture));
                 TimeOnly timeOnly = TimeOnly.Parse(timeAsString, new CultureInfo(ticketCulture));
 
+                //date.ToString("en-US");
+                string dateInStringInvariantCulture = date.ToString(CultureInfo.InvariantCulture); // Changes the date to m/d/y format.
+                string timeStringInInvariantCulture = timeOnly.ToString(CultureInfo.InvariantCulture);
+
+                string ticketData = $"{title,-40}|{dateInStringInvariantCulture}" +
+                    $"|{timeStringInInvariantCulture}";
             }
         }
     }
