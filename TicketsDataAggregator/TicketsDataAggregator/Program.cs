@@ -1,9 +1,14 @@
-﻿// See https://aka.ms/new-console-template for more information
-const string TicketsFolder = @"F:\C#Projeleri\UltimateC#MasterClass\Section12Strings\TicketsDataAggregator\Tickets";
-// const string TicketsFolder = @"..\..\Tickets";
+﻿using UglyToad;
+using UglyToad.PdfPig;
+using UglyToad.PdfPig.Content;
+
+// See https://aka.ms/new-console-template for more information
+
+ const string TicketsFolder = @"..\..\..\..\..\Tickets";
 
 try
 {
+    
     var ticketsAggregator = new TicketsAggregator(TicketsFolder);
 
     ticketsAggregator.Run();
