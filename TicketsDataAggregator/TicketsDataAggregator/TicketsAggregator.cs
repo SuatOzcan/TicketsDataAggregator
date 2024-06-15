@@ -4,6 +4,7 @@ using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig;
 using static System.Net.Mime.MediaTypeNames;
 using System.Globalization;
+using System.Text;
 
 internal class TicketsAggregator
 {
@@ -22,6 +23,7 @@ internal class TicketsAggregator
 
     internal void Run()
     {
+        StringBuilder strongBuilder = new StringBuilder(); 
         foreach (string pdfFilePath in Directory.GetFiles(_ticketsFolder, "*.pdf"))
         {
             using PdfDocument document = PdfDocument.Open(pdfFilePath);
@@ -58,8 +60,14 @@ internal class TicketsAggregator
 
                 string ticketData = $"{title,-40}|{dateInStringInvariantCulture}" +
                     $"|{timeStringInInvariantCulture}";
+
+                strongBuilder.AppendLine(ticketData);
             }
         }
+
+        string resultPath = Path.Combine(_ticketsFolder, "aggregatedTickets.txt");
+        File.WriteAllText(resultPath, strongBuilder.ToString());
+        Console.WriteLine("The results have been saved to aggregatedTickets.txt file.");
     }
 
     private static string ExtractDomain(string webAddress)
