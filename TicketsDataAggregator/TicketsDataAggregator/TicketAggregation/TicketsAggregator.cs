@@ -4,10 +4,14 @@ using UglyToad.PdfPig.Content;
 using UglyToad.PdfPig;
 using System.Globalization;
 using System.Text;
+using TicketsDataAggregator.Extensions;
+using TicketsDataAggregator.FileAccess;
 
 internal class TicketsAggregator
 {
     private readonly string _ticketsFolder;
+    private readonly IFileWriter _fileWriter;
+    private readonly IPDFReader _pdfReader;
     private readonly Dictionary<string, string> _domainToCultureMapping = new Dictionary<string, string>
     {
         [".com"] = "en-US", // en is the language, US is the country. en-Us is called a culture.
@@ -15,49 +19,47 @@ internal class TicketsAggregator
         [".jp"] = "jp-JP",
     };
 
-    public TicketsAggregator(string ticketsFolder)
+    public TicketsAggregator(string ticketsFolder, IFileWriter fileWriter, IPDFReader pdfReader)
     {
         this._ticketsFolder = ticketsFolder;
+        this._fileWriter = fileWriter;
+        this._pdfReader = pdfReader;
     }
 
     internal void Run()
     {
         StringBuilder strongBuilder = new StringBuilder();
-        foreach (string pdfFilePath in Directory.GetFiles(_ticketsFolder, "*.pdf"))
+        var ticketDocuments = _pdfReader.ReadPDF(_ticketsFolder);
+        foreach (var ticketDocument in ticketDocuments)
         {
-            using PdfDocument document = PdfDocument.Open(pdfFilePath);
-            Page page = document.GetPage(1);
-            //string pageContent = page.Text;
-            IEnumerable<string> lines = ProcessPage(page);
+            IEnumerable<string> lines = ProcessDocument(ticketDocument);
             strongBuilder.AppendLine(string.Join(Environment.NewLine, lines));
         }
-        SaveTicketsData(strongBuilder);
+    
+    _fileWriter.Write(strongBuilder.ToString(), _ticketsFolder,"aggregatedTickets.txt");
     }
 
-    
-
-    private IEnumerable<string> ProcessPage(Page page)
+    private IEnumerable<string> ProcessDocument(string document)
     {
-        string[] splittedText = page.Text.Split(new string[] {
+        string[] splitText = document.Split(new string[] {
                                                     "Title:", "Date:", "Time:", "Visit us:" },
                                                             StringSplitOptions.TrimEntries);
-        string webAddress = splittedText.Last();
-        string domain = ExtractDomain(webAddress); // returns one of ".com", ".fr", ".jp".
+        string webAddress = splitText.Last();
+        string domain = webAddress.ExtractDomain() ; // returns one of ".com", ".fr", ".jp".
         string ticketCulture = _domainToCultureMapping[domain];
 
-        for (int i = 1; i < splittedText.Length - 3; i += 3)
+        for (int i = 1; i < splitText.Length - 3; i += 3)
         {
             
-            yield return BuildTicketData(splittedText,i, ticketCulture);
+            yield return BuildTicketData(splitText,i, ticketCulture);
         }
     }
-
-    private string BuildTicketData(string[] splittedText, int i, string ticketCulture)
+    private string BuildTicketData(string[] splitText, int i, string ticketCulture)
     {
         // Hard-coded
-        string title = splittedText[i];
-        string dateAsString = splittedText[i + 1];
-        string timeAsString = splittedText[i + 2];
+        string title = splitText[i];
+        string dateAsString = splitText[i + 1];
+        string timeAsString = splitText[i + 2];
 
         DateTime date = DateTime.Parse(dateAsString, new CultureInfo(ticketCulture)); // Changes the string to standard
                                                                                       // DateTime d/m/y format.
@@ -80,16 +82,4 @@ internal class TicketsAggregator
         return ticketData;
     }
 
-    private void SaveTicketsData(StringBuilder strongBuilder)
-    {
-        string resultPath = Path.Combine(_ticketsFolder, "aggregatedTickets.txt");
-        File.WriteAllText(resultPath, strongBuilder.ToString());
-        Console.WriteLine("The results have been saved to aggregatedTickets.txt file.");
-    }
-
-    private static string ExtractDomain(string webAddress)
-    {
-        int lastDotIndex = webAddress.LastIndexOf('.');
-        return webAddress.Substring(lastDotIndex);
-    }
 }

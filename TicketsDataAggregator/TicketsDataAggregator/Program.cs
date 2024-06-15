@@ -1,15 +1,13 @@
-﻿using UglyToad;
-using UglyToad.PdfPig;
-using UglyToad.PdfPig.Content;
+﻿using TicketsDataAggregator.FileAccess;
 
 // See https://aka.ms/new-console-template for more information
 
- const string TicketsFolder = @"..\..\..\..\..\Tickets";
+const string TicketsFolder = @"..\..\..\..\..\Tickets";
 
 try
 {
     
-    var ticketsAggregator = new TicketsAggregator(TicketsFolder);
+    var ticketsAggregator = new TicketsAggregator(TicketsFolder, new FileWriter(), new PDFReader());
 
     ticketsAggregator.Run();
 }
